@@ -17,26 +17,31 @@ document.body.appendChild(renderer.view);
 const uiStructure = {
     "components": [
         {
+            "id": 0,
             "value": 42,
             "x": 100,
             "y": 100
         },
         {
+            "id": 1,
             "value": 20,
             "x": 400,
             "y": 100
         },
         {
+            "id": 2,
             "value": 20,
             "x": 600,
             "y": 100
         },
         {
+            "id": 3,
             "value": 20,
             "x": 100,
             "y": 600
         },
         {
+            "id": 4,
             "value": 20,
             "x": 400,
             "y": 600
@@ -44,45 +49,71 @@ const uiStructure = {
     ]
 };
 
-window.componentStorage = [];
+window.componentStorage = {};
 
 uiStructure.components.forEach(c => {
-    let uiComponent = new PIXI.Text(c.value, {
-    font : 'bold italic 36px Arial',
-    fill : '#F7EDCA',
-    stroke : '#4a1850',
-    strokeThickness : 5,
-    dropShadow : true,
-    dropShadowColor : '#000000',
-    dropShadowAngle : Math.PI / 6,
-    dropShadowDistance : 6,
-    wordWrap : true,
-    wordWrapWidth : 440
-});
-    uiComponent.x = c.x;
-    uiComponent.y = c.y;
-    uiComponent.interactive = true;
+    var container = new PIXI.Container();
+
+    let valueText = new PIXI.Text(c.value, {
+        font : 'bold italic 36px Arial',
+        fill : '#FFFFFF',
+        stroke : '#FFFFFF',
+        align: 'center'
+    });
+
+    valueText.x = c.x;
+    valueText.y = c.y;
+    valueText.interactive = true;
 
     let moveFunction;
 
-    uiComponent.on('mousedown', event => {
+    valueText.on('mousedown', event => {
         moveFunction = ev => {
+            console.log(ev);
             event.target.x = ev.data.global.x - event.target.width / 2;
             event.target.y = ev.data.global.y - event.target.height / 2;
         };
         event.target.on('mousemove', moveFunction);
     });
 
-    uiComponent.on('mouseup', event => {
+    valueText.on('mouseup', event => {
         event.target.off('mousemove', moveFunction);
     });
-    //uiComponent.on('mouseup', event => console.log('Mouse up'));
+    //valueText.on('mouseup', event => console.log('Mouse up'));
 
-    stage.addChild(uiComponent);
-    window.componentStorage.push(uiComponent);
+    stage.addChild(container);
+    container.addChild(valueText);
+
+    let unitText = new PIXI.Text("°C", {
+        font : 'bold italic 36px Arial',
+        fill : '#FFFFFF',
+        stroke : '#FFFFFF',
+        strokeThickness : 1,
+        wordWrap : true,
+        wordWrapWidth : 440
+    });
+
+    unitText.x = c.x + 100;
+    unitText.y = c.y;
+
+    container.addChild(unitText);
+
+    window.componentStorage[c.id] = {
+        valueText,
+        update: data => valueText.text = data
+    };
 });
 
 animate();
+
+var host = window.document.location.host.replace(/:.*/, '');
+var ws = new WebSocket('ws://' + host + ':7000');
+ws.onmessage = function (event) {
+    var msg = JSON.parse(event.data);
+    msg.updatedData.forEach(d => {
+        window.componentStorage[d.id].update(d.data);
+    });
+};
 
 function animate() {
 
@@ -92,6 +123,7 @@ function animate() {
     renderer.render(stage);
 }
 
+/*
 setInterval(function() {
     window.componentStorage.forEach(c => {
         let oldValue = parseFloat(c.text);
@@ -100,3 +132,5 @@ setInterval(function() {
         c.style.fill = newValue < 20 ? "#0000FF": newValue < 21 ? "#00FF00": "#FF0000";
     });    
 }, 1000);
+*/
+
