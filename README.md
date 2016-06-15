@@ -1,4 +1,4 @@
-# Frontend for ranchdata automation dashboard
+# Frontend for ranchdata home automation dashboard
 
 Run development mode
 
